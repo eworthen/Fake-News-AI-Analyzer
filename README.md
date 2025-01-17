@@ -53,7 +53,7 @@ project-directory/
    ```
 
 3. **Access the Application**
-   - Open your browser and navigate to `http://localhost`.
+   - Open your browser and navigate to `http://localhost:4200`.
    - The frontend (Angular) will load.
    - The Flask API runs on `http://localhost:5000`.
 
