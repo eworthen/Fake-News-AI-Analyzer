@@ -1,0 +1,23 @@
+<div class="container">
+    <h1>AI Analysis</h1>
+    <form (ngSubmit)="submitForm()">
+      <textarea 
+        [(ngModel)]="content" 
+        name="content" 
+        rows="5" 
+        placeholder="Paste a URL or article text here"
+        required>
+      </textarea>
+      <button type="submit">Analyze</button>
+    </form>
+  
+    <div *ngIf="result" class="result">
+      <h2>Analysis Result:</h2>
+      <pre>{{ result | json }}</pre>
+    </div>
+  
+    <div *ngIf="errorMessage" class="error">
+      <p>{{ errorMessage }}</p>
+    </div>
+  </div>
+  

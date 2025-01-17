@@ -1,0 +1,47 @@
+services:
+  flask:
+    build:
+      context: ./flask
+      dockerfile: Dockerfile
+    container_name: keenado_flask
+    ports:
+      - "5000:5000"
+    volumes:
+      - ./flask:/app
+    networks:
+      - app-network
+    environment:
+      - FLASK_APP=app.app
+    command: flask run --host=0.0.0.0 --port=5000
+
+  angular:
+    build:
+      context: ./angular
+      dockerfile: Dockerfile
+    container_name: keenado_angular
+    ports:
+      - "4200:4200"
+    volumes:
+      - ./angular:/app
+      - /app/node_modules
+    networks:
+      - app-network
+    command: bash -c "npm install && ng serve --host 0.0.0.0 --poll=2000"
+
+  nginx:
+    build:
+      context: ./nginx
+      dockerfile: Dockerfile
+    container_name: keenado_nginx
+    ports:
+      - "80:80"
+    volumes:
+      - ./angular/dist:/usr/share/nginx/html
+    networks:
+      - app-network
+    depends_on:
+      - angular
+      - flask
+
+networks:
+  app-network:

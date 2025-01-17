@@ -1,0 +1,8 @@
+#Required
+Flask>=2.2
+
+#import dependencies
+flask-cors
+torch
+transformers
+bs4
