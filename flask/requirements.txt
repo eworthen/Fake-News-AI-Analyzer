@@ -1,8 +1,5 @@
-#Required
-Flask>=2.2
-
-#import dependencies
+flask>=2.2
 flask-cors
-torch
-transformers
-bs4
+flask-limiter
+requests
+beautifulsoup4

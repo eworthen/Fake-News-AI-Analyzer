@@ -1,0 +1,215 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <title>Fake News Analyzer</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <style>
+    * { box-sizing: border-box; }
+
+    body {
+      font-family: 'Segoe UI', sans-serif;
+      background: #f2f2f2;
+      margin: 0;
+      padding: 0;
+      display: flex;
+      justify-content: center;
+      align-items: flex-start;
+      min-height: 100vh;
+    }
+
+    .container {
+      margin-top: 50px;
+      background: #fff;
+      padding: 30px;
+      max-width: 700px;
+      width: 90%;
+      border-radius: 8px;
+      box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+    }
+
+    h1 {
+      text-align: center;
+      color: #222;
+    }
+
+    textarea, input[type="text"] {
+      width: 100%;
+      padding: 12px;
+      margin-top: 10px;
+      border: 1px solid #ccc;
+      border-radius: 6px;
+      font-size: 16px;
+      resize: vertical;
+    }
+
+    .form-section { margin-bottom: 20px; }
+
+    label { font-weight: bold; }
+
+    .radio-group {
+      margin: 10px 0;
+    }
+
+    .radio-group input { margin-right: 6px; }
+
+    .btn {
+      background-color: #007BFF;
+      color: #fff;
+      padding: 12px 24px;
+      border: none;
+      border-radius: 6px;
+      font-size: 16px;
+      cursor: pointer;
+      width: 100%;
+      transition: background-color 0.3s;
+    }
+
+    .btn:hover { background-color: #0056b3; }
+
+    .word-count {
+      text-align: right;
+      font-size: 0.9em;
+      color: #666;
+      margin-top: 5px;
+    }
+
+    .result {
+      margin-top: 30px;
+      background: #f9f9f9;
+      padding: 20px;
+      border-left: 5px solid #007BFF;
+      border-radius: 6px;
+    }
+
+    .result p { margin: 10px 0; }
+
+    .label { font-weight: bold; }
+
+    .error {
+      color: #c00;
+      background-color: #fcebea;
+      padding: 10px;
+      border-radius: 5px;
+      margin-top: 20px;
+    }
+
+    .spinner {
+      display: none;
+      text-align: center;
+      margin-top: 20px;
+    }
+
+    .spinner div {
+      display: inline-block;
+      width: 24px;
+      height: 24px;
+      border: 4px solid #007BFF;
+      border-top: 4px solid transparent;
+      border-radius: 50%;
+      animation: spin 1s linear infinite;
+    }
+
+    @keyframes spin {
+      to { transform: rotate(360deg); }
+    }
+  </style>
+</head>
+<body>
+  <div class="container" role="main">
+    <h1>🧠 Fake News Analyzer</h1>
+
+    <form method="POST" onsubmit="showSpinner()" aria-label="Fake News Analyzer Form">
+      <div class="form-section">
+        <label for="content">Enter article content or URL:</label>
+        <textarea id="content" name="content" rows="8" required oninput="countWords()" aria-label="Content Textarea">{{ text or '' }}</textarea>
+        <div class="word-count" id="wordCounter">0 / 800 words</div>
+      </div>
+
+      <div class="form-section radio-group">
+        <label>
+          <input type="radio" name="is_url" value="true" {% if is_url %}checked{% endif %}> This is a URL
+        </label>
+        &nbsp;&nbsp;
+        <label>
+          <input type="radio" name="is_url" value="false" {% if not is_url %}checked{% endif %}> This is article text
+        </label>
+      </div>
+
+      <div style="display:none;">
+        <label for="hp_field">Leave this field empty</label>
+        <input type="text" name="hp_field" id="hp_field" autocomplete="off">
+      </div>
+
+      <button class="btn" type="submit">Analyze</button>
+
+      <div class="spinner" id="loadingSpinner" aria-hidden="true">
+        <div></div>
+        <p>Analyzing...</p>
+      </div>
+    </form>
+
+    {% if result %}
+      <div class="result" aria-live="polite">
+        <h2>🧪 Analysis Result</h2>
+
+        {% if result.error %}
+          <div class="error">
+            <strong>Error:</strong> {{ result.error }}
+          </div>
+        {% else %}
+          {% if result.ai_generated %}
+            <p><span class="label">AI Generated:</span>
+              {{ result.ai_generated.label }} ({{ result.ai_generated.confidence | round(3) }})
+            </p>
+          {% endif %}
+
+          {% if result.fake_news %}
+            <p><span class="label">Fake News Prediction:</span>
+              {{ result.fake_news.label }} ({{ result.fake_news.confidence | round(3) }})
+            </p>
+          {% endif %}
+
+          {% if result.analysis %}
+            <p><span class="label">Groq Analysis:</span><br>
+              {{ result.analysis }}
+            </p>
+          {% endif %}
+
+          {% if result.content_preview %}
+            <p><span class="label">Content Preview:</span><br>
+              {{ result.content_preview }}
+            </p>
+          {% endif %}
+        {% endif %}
+      </div>
+    {% endif %}
+  </div>
+
+  <script>
+    function countWords() {
+      const text = document.getElementById("content").value;
+      const wordCounter = document.getElementById("wordCounter");
+      const isUrl = document.querySelector('input[name="is_url"]:checked').value === "true";
+
+      if (isUrl) {
+        wordCounter.style.display = "none";
+      } else {
+        const wordCount = text.trim().split(/\s+/).filter(Boolean).length;
+        wordCounter.innerText = `${wordCount} / 800 words`;
+        wordCounter.style.display = "block";
+      }
+    }
+
+    function showSpinner() {
+      document.getElementById("loadingSpinner").style.display = "block";
+    }
+
+    document.querySelectorAll('input[name="is_url"]').forEach(input => {
+      input.addEventListener("change", countWords);
+    });
+
+    window.addEventListener("DOMContentLoaded", countWords);
+  </script>
+</body>
+</html>

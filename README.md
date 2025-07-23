@@ -1,41 +1,57 @@
-# AI News Analysis App
-This project is a web-based application that detects whether a news article is AI-generated and classifies it as real or fake news using machine learning models.
+# Fake News AI Analyzer
+
+A containerized Flask web app that analyzes news content to determine whether it was AI-generated and classifies it as real or fake. The app uses the `llama3-8b-8192` model via the Groq Cloud API and implements Redis-backed rate limiting for abuse protection. Users can analyze either plain text or URLs through a lightweight, server-rendered UI.
+
+---
 
 ## Author
 
-This project was created by Ethan Worthen
+**Ethan Worthen**
+
+---
 
 ## License
 
-This project is licensed under the [MIT License](LICENSE).
+Licensed under the [MIT License](LICENSE)
 
-## Features
-- Analyze plain text or URL content.
-- Detect if the content is AI-generated.
-- Classify content as real or fake news.
-- Display analysis results on the Angular frontend.
+---
+
+## 🚀 Features
+
+- Accepts user input as raw text or a news article URL
+- Detects if content is AI-generated
+- Classifies articles as "Real" or "Fake" news
+- Simple and clean UI built with Flask + Jinja2 templates
+- Built-in rate limiting to prevent API abuse
+- Honeypot form protection to block bots
 
 ---
 
 ## Project Structure
+
 ```
-project-directory/
-├── angular/                   # Angular frontend
-├── flask/                     # Flask backend
+project-root/
+├── flask/
 │   ├── app/
-│   │   ├── app.py             # Flask application
-│   │   └── requirements.txt   # Python dependencies
-├── nginx/                     # Nginx configuration
-│   └── default.conf           # Proxy settings for Angular and Flask
-├── docker-compose.yml         # Docker configuration
-├── README.md                  # Project documentation
+│   │   ├── app.py              # Main Flask application logic
+│   │   └── templates/
+│   │       └── index.html      # User interface
+│   └── Dockerfile              # Flask container image
+├── docker-compose.yml          # Orchestrates Flask + Redis services
+├── requirements.txt            # Python packages
+├── .env                        # Your Groq API key and config
+├── .env.example                # Template .env file
+├── LICENSE
+└── README.md                   # You're here!
 ```
 
 ---
 
 ## Requirements
-- Docker
-- Docker Compose
+
+- Docker  
+- Docker Compose  
+- Groq API Key (https://console.groq.com)
 
 ---
 
@@ -43,116 +59,85 @@ project-directory/
 
 1. **Clone the Repository**
    ```bash
-   git clone <repository-url>
-   cd project-directory
+   git clone https://github.com/your-username/fake-news-ai-analyzer.git
+   cd fake-news-ai-analyzer
    ```
 
-2. **Build and Start the Containers**
+2. **Create the `.env` File**
+   ```bash
+   cp .env.example .env
+   # Then edit the file and add your GROQ_API_KEY
+   ```
+
+3. **Build and Start the Containers**
    ```bash
    docker-compose up --build
    ```
 
-3. **Access the Application**
-   - Open your browser and navigate to `http://localhost:4200`.
-   - The frontend (Angular) will load.
-   - The Flask API runs on `http://localhost:5000`.
+4. **Access the Application**
+   Visit: [http://localhost:5000](http://localhost:5000)
 
 ---
 
-## Flask Backend
-The Flask app performs the following:
-- Processes user input from the Angular frontend.
-- Uses Hugging Face models to detect AI-generated content and classify it as real or fake news.
+## API Endpoint
 
-### Flask API Endpoints
-#### `POST /analyze`
-- **Request Body**:
-  ```json
-  {
-    "content": "Text or URL to analyze",
-    "is_url": "true" or "false"
-  }
-  ```
-- **Response**:
-  ```json
-  {
-    "ai_generated": "LABEL_0 or LABEL_1",
-    "ai_confidence": 0.999,
-    "fake_news": "FAKE or REAL",
-    "fake_confidence": 0.987,
-    "article_text": "Extracted article text (first 500 characters)"
-  }
-  ```
+### POST `/analyze`
 
----
+Accepts plain text or a URL and returns AI and fake news classification results.
 
-## Angular Frontend
-The Angular app allows users to:
-- Paste or type content.
-- Enter a URL for analysis.
-- View detailed results of the analysis.
+#### Request:
+```json
+{
+  "content": "Text or URL to analyze",
+  "is_url": true
+}
+```
 
-### How to Use:
-1. Paste the text or URL into the provided textarea.
-2. Click the "Analyze" button to submit the content.
-3. View the analysis results.
-
----
-
-## Nginx Configuration
-Nginx acts as a reverse proxy:
-- Routes requests to the Angular frontend (`http://localhost`).
-- Routes API requests to the Flask backend (`http://localhost/`).
-
-### Nginx Configuration (`default.conf`):
-```nginx
-server {
-    listen 80;
-
-    server_name localhost;
-
-    location / {
-        proxy_pass http://angular:4200;
-        proxy_set_header Host $host;
-        proxy_set_header X-Real-IP $remote_addr;
-        proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
-        proxy_set_header X-Forwarded-Proto $scheme;
-    }
-
-    location /api/ {
-        proxy_pass http://flask:5000/;
-        proxy_set_header Host $host;
-        proxy_set_header X-Real-IP $remote_addr;
-        proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
-        proxy_set_header X-Forwarded-Proto $scheme;
-    }
+#### Response:
+```json
+{
+  "analysis": "AI-generated or not, and fake or real news.",
+  "content_preview": "First 50 words of extracted or submitted content."
 }
 ```
 
 ---
 
-## Development Notes
-### Backend
-- **Models Used**:
-  - `roberta-base-openai-detector` (AI detection)
-  - `mikiohat/distilbert-base-uncased-LoRA-finetuned-fake-or-real-news` (Fake news detection)
+## Technical Details
 
-### Frontend
-- Angular app is built with `@angular/cli` and serves on port `4200`.
+### Flask Backend
+- Handles form submissions and API POST requests
+- Parses URLs using `BeautifulSoup`
+- Sends input to Groq API via `requests`
+- Applies Redis-backed rate limiting with `flask-limiter`
+  - `10/hour` global per IP
+  - `5/minute` on `/analyze`
+
+### Groq API
+- Model: `llama3-8b-8192`
+- Endpoint: `https://api.groq.com/openai/v1/chat/completions`
+- Max Tokens: 1200
+
+---
+
+## Security
+
+- **Rate Limiting**: Via Redis using `flask-limiter`
+- **Bot Protection**: Honeypot field (`hp_field`)
+- **Input Validation**: Max 800-word limit for direct text
 
 ---
 
 ## Future Improvements
-1. Add database support for storing results (optional).
-2. Extend analysis models for broader AI-generated content detection.
-3. Improve UI/UX for better user experience.
+
+- Export results to PDF or CSV
+- Summarize articles using AI
+- Add database support for tracking results
+- Improve mobile responsiveness
+- Admin dashboard for reviewing submissions
 
 ---
 
-## License
-This project is licensed under the MIT License. See `LICENSE` for details.
+## Contributors
 
----
-
-## Authors
-- **Your Name** (Developer)
+- Ethan Worthen

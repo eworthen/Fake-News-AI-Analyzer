@@ -1,0 +1,20 @@
+# Bytecode and cache
+__pycache__/
+*.py[cod]
+
+# Virtual environments (if used)
+venv/
+
+# Environment variable files
+.env
+
+# Editor settings
+.vscode/
+
+# Logs and temporary files
+*.log
+*.tmp
+
+# OS-specific metadata
+.DS_Store
+*.swp
