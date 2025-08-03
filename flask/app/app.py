@@ -10,12 +10,13 @@ import os
 app = Flask(__name__, template_folder="templates", static_folder="static")
 CORS(app)
 
-# Rate limiter: 10 requests/hour per IP globally, 5/minute for /analyze
+# Rate limiter: 1 requests/day per IP globally, 5/minute for /analyze
 limiter = Limiter(
     key_func=get_remote_address,
     storage_uri="redis://redis:6379",  # Match your service name
-    default_limits=["10 per hour"]
+    default_limits=["1 per day"]
 )
+limiter.init_app(app)
 
 # Groq API configuration
 GROQ_API_KEY = os.getenv("GROQ_API_KEY")
