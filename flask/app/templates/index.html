@@ -141,6 +141,11 @@
         <input type="text" name="hp_field" id="hp_field" autocomplete="off">
       </div>
 
+      <div style="display: flex; justify-content: center; align-items: center; padding: 1.5rem 0;">
+        <div class="g-recaptcha" data-sitekey="{{ recaptcha_site_key }}"></div>
+      </div>
+      <script src="https://www.google.com/recaptcha/api.js" async defer></script>
+
       <button class="btn" type="submit">Analyze</button>
 
       <div class="spinner" id="loadingSpinner" aria-hidden="true">
